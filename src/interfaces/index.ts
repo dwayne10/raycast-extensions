@@ -15,6 +15,7 @@ export interface Preferences {
   readonly enableDia: boolean;
   readonly enableComet: boolean;
   readonly enableChatGPTAtlas: boolean;
+  readonly chromeProfiles?: string;
   readonly profilePathChrome?: string;
   readonly profilePathFirefox?: string;
   readonly profilePathSafari?: string;
@@ -32,6 +33,8 @@ export interface Preferences {
   readonly firstInResults: SupportedBrowsers;
   readonly defaultBrowser?: SupportedBrowsers & "Default";
   readonly searchEngine?: string;
+  readonly historyDaysLimit?: number;
+  readonly historyLimitThreshold?: number;
 }
 
 export interface SearchResult {
@@ -39,6 +42,7 @@ export interface SearchResult {
   readonly isLoading: boolean;
   readonly permissionView?: ReactNode;
   readonly data?: HistoryEntry[] | undefined;
+  readonly profileName?: string;
 }
 export interface HistoryEntry {
   readonly id: string;
@@ -46,6 +50,14 @@ export interface HistoryEntry {
   readonly title: string;
   readonly lastVisited: Date;
   readonly browser: SupportedBrowsers;
+  readonly profileName?: string;
+  readonly profileDir?: string;
+}
+
+export interface ChromeProfile {
+  readonly profilePath: string;
+  readonly profileName: string;
+  readonly profileDir: string;
 }
 
 export enum SupportedBrowsers {

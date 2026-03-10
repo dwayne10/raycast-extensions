@@ -1,8 +1,9 @@
 import { ActionPanel, Action, getPreferenceValues, List } from "@raycast/api";
-import { useHistorySearch } from "./hooks/useHistorySearch";
+import { useHistorySearch, useChromeMultiProfileSearch } from "./hooks/useHistorySearch";
 import { ReactElement, isValidElement, useState } from "react";
-import { Preferences, SupportedBrowsers } from "./interfaces";
+import { Preferences, SearchResult, SupportedBrowsers } from "./interfaces";
 import { BrowserHistoryActions, ListEntries } from "./components";
+import { mergeAndSortHistoryEntries } from "./util/sortHistoryEntries";
 
 export default function Command(): ReactElement {
   const preferences = getPreferenceValues<Preferences>();
@@ -11,45 +12,31 @@ export default function Command(): ReactElement {
 
   const isLoading: boolean[] = [];
   const permissionView: ReactElement[] = [];
-  let noHistory = true;
   const searchTextEncoded = encodeURIComponent(searchText ?? "");
   const searchEngine = preferences.searchEngine;
   const searchUrl = searchEngine
     ? searchEngine.replace(/{{query}}/g, searchTextEncoded)
     : `https://www.google.com/search?q=${searchTextEncoded}`;
 
-  let entries = Object.entries(preferences)
-    .filter(([key, val]) => key.startsWith("enable") && val)
-    .map(([key]) => useHistorySearch(key.replace("enable", "") as SupportedBrowsers, searchText))
-    .map((entry) => {
-      if (entry.permissionView) {
-        if (entry.permissionView && isValidElement(entry.permissionView)) {
-          permissionView.push(entry.permissionView);
-        }
-      }
-      isLoading.push(entry.isLoading);
+  const chromeResults = preferences.enableChrome ? useChromeMultiProfileSearch(searchText) : [];
+  const otherResults = Object.entries(preferences)
+    .filter(([key, val]) => key.startsWith("enable") && val && key !== "enableChrome")
+    .map(([key]) => useHistorySearch(key.replace("enable", "") as SupportedBrowsers, searchText));
 
-      if ((entry.data?.length ?? 0) > 0) {
-        noHistory = false;
-      }
+  const allResults: SearchResult[] = [...chromeResults, ...otherResults];
 
-      return (
-        <List.Section title={entry.browser || ""} key={entry.browser}>
-          {entry.data?.map((e) => <ListEntries.HistoryEntry entry={e} key={e.id} />)}
-        </List.Section>
-      );
-    });
+  for (const entry of allResults) {
+    if (entry.permissionView && isValidElement(entry.permissionView)) {
+      permissionView.push(entry.permissionView);
+    }
+    isLoading.push(entry.isLoading);
+  }
 
   if (permissionView.length > 0) {
     return permissionView[0];
   }
 
-  entries.sort((a, b) => a.props.title.localeCompare(b.props.title));
-
-  if (preferences.firstInResults) {
-    const firstEntry = entries.filter((e) => e.props.title === preferences.firstInResults);
-    entries = [firstEntry[0], ...entries.filter((e) => e.props.title !== preferences.firstInResults)];
-  }
+  const sortedEntries = mergeAndSortHistoryEntries(allResults, preferences.firstInResults);
 
   return (
     <List onSearchTextChange={setSearchText} isLoading={isLoading.some((e) => e)} throttle={false}>
@@ -64,7 +51,7 @@ export default function Command(): ReactElement {
             </ActionPanel>
           }
         />
-      ) : noHistory ? (
+      ) : sortedEntries.length === 0 ? (
         <List.EmptyView
           title={searchText ? `No ${searchText} history found` : "No history found"}
           actions={
@@ -74,7 +61,7 @@ export default function Command(): ReactElement {
           }
         />
       ) : (
-        entries
+        sortedEntries.map((entry) => <ListEntries.HistoryEntry entry={entry} key={entry.id} />)
       )}
     </List>
   );

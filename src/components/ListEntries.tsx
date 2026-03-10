@@ -7,14 +7,21 @@ export class ListEntries {
   public static HistoryEntry = HistoryListEntry;
 }
 
-function HistoryListEntry({ entry: { url, title, id, lastVisited, browser } }: { entry: HistoryEntry }) {
+function HistoryListEntry({ entry }: { entry: HistoryEntry }) {
+  const { url, title, id, lastVisited, browser, profileName } = entry;
+  const accessories: List.Item.Accessory[] = [{ tag: browser }];
+  if (profileName) {
+    accessories.push({ tag: profileName });
+  }
+
   return (
     <List.Item
       id={id.toString()}
       title={title || ""}
       subtitle={url}
       icon={getFavicon(url)}
-      actions={<BrowserHistoryActions.HistoryItem entry={{ url, title, id, lastVisited, browser }} />}
+      accessories={accessories}
+      actions={<BrowserHistoryActions.HistoryItem entry={{ url, title, id, lastVisited, browser, profileName }} />}
     />
   );
 }

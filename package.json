@@ -8,7 +8,8 @@
   "contributors": [
     "tkdkid1000",
     "mikugeek",
-    "ridemountainpig"
+    "ridemountainpig",
+    "iamasimpleman"
   ],
   "categories": [
     "Applications",
@@ -181,6 +182,15 @@
           "description": "Enable Chrome history to show up in results",
           "default": false,
           "label": "Google Chrome"
+        },
+        {
+          "name": "chromeProfiles",
+          "type": "textfield",
+          "required": false,
+          "title": "Chrome Profiles Filter",
+          "description": "Comma-separated profile names to include (e.g., 'Personal,Work'). Leave empty to search all profiles.",
+          "default": "Personal,Work",
+          "placeholder": "Personal,Work"
         },
         {
           "name": "enableFirefox",
@@ -397,6 +407,22 @@
           "title": "ChatGPT Atlas Profile Path",
           "description": "Path to ChatGPT Atlas profile folder. Leave empty to use default profile. Default at /Users/username/Library/Application Support/com.openai.atlas/browser-data/host/Default",
           "placeholder": "/Users/username/Library/Application Support/com.openai.atlas/browser-data/host/Default"
+        },
+        {
+          "name": "historyLimitThreshold",
+          "type": "textfield",
+          "required": false,
+          "title": "History Limit Threshold",
+          "description": "Apply date filter when Chrome results exceed this count. Set to 0 to disable. Default: 500",
+          "placeholder": "500"
+        },
+        {
+          "name": "historyDaysLimit",
+          "type": "textfield",
+          "required": false,
+          "title": "History Days Limit",
+          "description": "Only show history from the last N days when threshold is exceeded. Default: 90",
+          "placeholder": "90"
         }
       ]
     }

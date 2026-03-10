@@ -7,7 +7,7 @@ export class BrowserHistoryActions {
   public static OpenPreferences = ActionOpenPreferences;
 }
 
-function HistoryItemAction({ entry: { url, browser } }: { entry: HistoryEntry }) {
+function HistoryItemAction({ entry: { url, browser, profileDir } }: { entry: HistoryEntry }) {
   const { defaultBrowser } = getPreferenceValues<Preferences>();
   const actions = {
     [SupportedBrowsers.Chrome]: (
@@ -15,7 +15,7 @@ function HistoryItemAction({ entry: { url, browser } }: { entry: HistoryEntry })
         title={"Open in Chrome"}
         icon={"chrome-logo.png"}
         shortcut={{ modifiers: ["cmd"], key: "c" }}
-        onAction={() => openNewTab(SupportedBrowsers.Chrome, url)}
+        onAction={() => openNewTab(SupportedBrowsers.Chrome, url, profileDir)}
       />
     ),
     [SupportedBrowsers.Firefox]: (

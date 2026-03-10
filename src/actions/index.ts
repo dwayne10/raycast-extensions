@@ -1,7 +1,18 @@
 import { closeMainWindow, open, popToRoot } from "@raycast/api";
+import { exec } from "child_process";
 import { SupportedBrowsers } from "../interfaces";
 
-export async function openNewTab(browser: SupportedBrowsers, url: string): Promise<void> {
+export async function openNewTab(browser: SupportedBrowsers, url: string, profileDir?: string): Promise<void> {
+  popToRoot();
+  closeMainWindow({ clearRootSearch: true });
+
+  // Handle Chrome with specific profile directory
+  if (browser === SupportedBrowsers.Chrome && profileDir) {
+    const cmd = `open -na "Google Chrome" --args --profile-directory="${profileDir}" "${url}"`;
+    exec(cmd);
+    return;
+  }
+
   let appName = "";
   switch (browser) {
     case SupportedBrowsers.Chrome:
@@ -50,7 +61,5 @@ export async function openNewTab(browser: SupportedBrowsers, url: string): Promi
       throw new Error(`Unsupported browser: ${browser}`);
   }
 
-  popToRoot();
-  closeMainWindow({ clearRootSearch: true });
   await open(url, appName);
 }

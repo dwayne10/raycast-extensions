@@ -1,7 +1,7 @@
 import fs, { readFileSync } from "fs";
 import path, { resolve } from "path";
 import { homedir } from "os";
-import { ChatGPTAtlasLocalState, Preferences, SupportedBrowsers } from "../interfaces";
+import { ChatGPTAtlasLocalState, ChromeProfile, Preferences, SupportedBrowsers } from "../interfaces";
 import { getPreferenceValues } from "@raycast/api";
 import {
   defaultProfilePathArc,
@@ -26,6 +26,44 @@ const userLibraryDirectoryPath = () => {
   }
 
   return path.join(process.env.HOME, "Library");
+};
+
+export const getChromeProfiles = (): ChromeProfile[] => {
+  const chromeDir = path.join(userLibraryDirectoryPath(), "Application Support", "Google", "Chrome");
+  const localStatePath = path.join(chromeDir, "Local State");
+
+  const profileNames: Record<string, string> = {};
+  try {
+    const localState = JSON.parse(readFileSync(localStatePath, "utf-8"));
+    const infoCache = localState?.profile?.info_cache || {};
+    for (const [key, value] of Object.entries(infoCache)) {
+      profileNames[key] = (value as { name?: string })?.name || key;
+    }
+  } catch {
+    // Fall back to directory names if Local State is unreadable
+  }
+
+  const profiles: ChromeProfile[] = [];
+  try {
+    const entries = fs.readdirSync(chromeDir, { withFileTypes: true });
+    for (const entry of entries) {
+      if (!entry.isDirectory()) continue;
+      if (entry.name !== "Default" && !entry.name.startsWith("Profile ")) continue;
+
+      const historyPath = path.join(chromeDir, entry.name, "History");
+      if (fs.existsSync(historyPath)) {
+        profiles.push({
+          profilePath: historyPath,
+          profileName: profileNames[entry.name] || entry.name,
+          profileDir: entry.name,
+        });
+      }
+    }
+  } catch {
+    // Return empty if Chrome directory doesn't exist
+  }
+
+  return profiles;
 };
 
 const getProfileName = (userDirectoryPath: string, browser: SupportedBrowsers) => {
