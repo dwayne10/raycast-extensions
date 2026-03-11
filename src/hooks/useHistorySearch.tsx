@@ -2,10 +2,17 @@ import { copyFileSync, existsSync, mkdtempSync } from "fs";
 import { tmpdir } from "os";
 import { join } from "path";
 import { useSQL } from "@raycast/utils";
+import { useMemo } from "react";
 import { HistoryEntry, HistoryQueryFunction, Preferences, SearchResult, SupportedBrowsers } from "../interfaces";
 import { getChromeProfiles, getHistoryDateColumn, getHistoryDbPath, getHistoryTable } from "../util";
 import { NotInstalledError } from "../components";
 import { getPreferenceValues } from "@raycast/api";
+import {
+  filterImportedChromeHistoryEntries,
+  getImportedChromeHistoryEntries,
+  IMPORTED_CHROME_HISTORY_PROFILE_NAME,
+  resolveImportedChromeHistoryPath,
+} from "../util/importedChromeHistory";
 
 const whereClauses = (tableTitle: string, terms: string[], tableUrl?: string) => {
   const urlTable = tableUrl || tableTitle;
@@ -171,6 +178,43 @@ export function useChromeMultiProfileSearch(query?: string): SearchResult[] {
   }
 
   return results;
+}
+
+export function useImportedChromeTsvSearch(query?: string): SearchResult | undefined {
+  const { importedChromeHistoryTsvPath } = getPreferenceValues<Preferences>();
+
+  return useMemo(() => {
+    const configuredPath = importedChromeHistoryTsvPath?.trim();
+    if (!configuredPath) {
+      return undefined;
+    }
+
+    const resolvedPath = resolveImportedChromeHistoryPath(configuredPath);
+    if (!existsSync(resolvedPath)) {
+      return {
+        browser: SupportedBrowsers.Chrome,
+        data: [],
+        isLoading: false,
+        profileName: IMPORTED_CHROME_HISTORY_PROFILE_NAME,
+      };
+    }
+
+    try {
+      return {
+        browser: SupportedBrowsers.Chrome,
+        data: filterImportedChromeHistoryEntries(getImportedChromeHistoryEntries(resolvedPath), query),
+        isLoading: false,
+        profileName: IMPORTED_CHROME_HISTORY_PROFILE_NAME,
+      };
+    } catch {
+      return {
+        browser: SupportedBrowsers.Chrome,
+        data: [],
+        isLoading: false,
+        profileName: IMPORTED_CHROME_HISTORY_PROFILE_NAME,
+      };
+    }
+  }, [importedChromeHistoryTsvPath, query]);
 }
 
 export function useHistorySearch(browser: SupportedBrowsers, query: string | undefined): SearchResult {

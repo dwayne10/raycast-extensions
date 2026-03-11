@@ -16,6 +16,7 @@ export interface Preferences {
   readonly enableComet: boolean;
   readonly enableChatGPTAtlas: boolean;
   readonly chromeProfiles?: string;
+  readonly importedChromeHistoryTsvPath?: string;
   readonly profilePathChrome?: string;
   readonly profilePathFirefox?: string;
   readonly profilePathSafari?: string;

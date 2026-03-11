@@ -193,6 +193,14 @@
           "placeholder": "Personal,Work"
         },
         {
+          "name": "importedChromeHistoryTsvPath",
+          "type": "textfield",
+          "required": false,
+          "title": "Imported Chrome History TSV",
+          "description": "Optional path to an HTU-compatible TSV export to include alongside live browser history.",
+          "placeholder": "~/chrome-history-merge/merged_history.tsv"
+        },
+        {
           "name": "enableFirefox",
           "type": "checkbox",
           "required": false,

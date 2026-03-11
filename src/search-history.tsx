@@ -1,5 +1,5 @@
 import { ActionPanel, Action, getPreferenceValues, List } from "@raycast/api";
-import { useHistorySearch, useChromeMultiProfileSearch } from "./hooks/useHistorySearch";
+import { useHistorySearch, useChromeMultiProfileSearch, useImportedChromeTsvSearch } from "./hooks/useHistorySearch";
 import { ReactElement, isValidElement, useState } from "react";
 import { Preferences, SearchResult, SupportedBrowsers } from "./interfaces";
 import { BrowserHistoryActions, ListEntries } from "./components";
@@ -7,7 +7,9 @@ import { mergeAndSortHistoryEntries } from "./util/sortHistoryEntries";
 
 export default function Command(): ReactElement {
   const preferences = getPreferenceValues<Preferences>();
-  const enabled = Object.entries(preferences).filter(([key, value]) => key.startsWith("enable") && value).length > 0;
+  const enabled =
+    Object.entries(preferences).filter(([key, value]) => key.startsWith("enable") && value).length > 0 ||
+    Boolean(preferences.importedChromeHistoryTsvPath?.trim());
   const [searchText, setSearchText] = useState<string>();
 
   const isLoading: boolean[] = [];
@@ -19,11 +21,14 @@ export default function Command(): ReactElement {
     : `https://www.google.com/search?q=${searchTextEncoded}`;
 
   const chromeResults = preferences.enableChrome ? useChromeMultiProfileSearch(searchText) : [];
+  const importedChromeHistory = useImportedChromeTsvSearch(searchText);
   const otherResults = Object.entries(preferences)
     .filter(([key, val]) => key.startsWith("enable") && val && key !== "enableChrome")
     .map(([key]) => useHistorySearch(key.replace("enable", "") as SupportedBrowsers, searchText));
 
-  const allResults: SearchResult[] = [...chromeResults, ...otherResults];
+  const allResults: SearchResult[] = importedChromeHistory
+    ? [...chromeResults, importedChromeHistory, ...otherResults]
+    : [...chromeResults, ...otherResults];
 
   for (const entry of allResults) {
     if (entry.permissionView && isValidElement(entry.permissionView)) {
